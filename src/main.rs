@@ -1,5 +1,5 @@
 use crate::{Class::{Earth, Water, Fire, Air}, Skill::{Magnitude, HealingWave, FireBurst, Typhoon}};
-
+use std::io;
 
 //enums
 enum Class {
@@ -58,12 +58,42 @@ impl Player {
         self.atk
     }
 
-    fn take_dmg(&mut self, damage:u32) {
-        let act_dmg = damage - (self.def / 2);
-        if act_dmg <= 0 {
-            self.hp -= 1;
+    fn take_dmg(&mut self, damage: u32) {
+        if damage < self.def/2 {
+            self.hp = self.hp.saturating_sub(1);
+            return
         }
-        self.hp -= act_dmg;
+
+        let act_dmg = damage - (self.def / 2);
+        self.hp = self.hp.saturating_sub(act_dmg);
+    }
+
+    fn is_alive(&self) -> bool {
+        self.hp > 0
+    }
+
+    fn skill(&mut self) -> u32 {
+        match self.skill{
+            HealingWave => {
+                self.hp += 15;
+                println!("You dealt 30dmg and restored 15 hp");
+                30
+            }
+            FireBurst => {
+                println!("You dealt 40dmg + {}extra", self.atk/8);
+                40 + self.atk/8
+            }
+            Magnitude => {
+                self.def += 15;
+                println!("You dealt 35dmg and buffed your defense");
+                35
+            }
+            Typhoon => {
+                self.spd += 10;
+                println!("You dealt 30dmg and buffed your speed");
+                30
+            }
+        }
     }
 
 }
@@ -115,11 +145,17 @@ impl Enemy {
     }
 
     fn take_dmg(&mut self, damage: u32) {
-        let act_dmg = damage - (self.def / 2);
-        if act_dmg <= 0 {
-            self.hp -= 1;
+        if damage < self.def/2 {
+            self.hp = self.hp.saturating_sub(1);
+            return
         }
-        self.hp -= act_dmg;
+
+        let act_dmg = damage - (self.def / 2);
+        self.hp = self.hp.saturating_sub(act_dmg);
+    }
+
+    fn is_alive(&self) -> bool {
+        self.hp > 0
     }
 }
 
@@ -128,13 +164,30 @@ impl Enemy {
 fn main() {
     let mut player = Player::new("River".to_string(), Water);
 
+    println!("A wild goblin has appeared!");
     let mut enemy = Enemy::new(EnemyType::Goblin);
 
-    Enemy::take_dmg(&mut enemy, Player::atk(&player));
+    while player.is_alive() && enemy.is_alive() {
+        println!("===============");
+        println!("Your hp: {}", player.hp);
+        println!("Enemy's hp: {}", enemy.hp);
 
-    println!("Enemy hp :{}", enemy.hp);
+        println!("
+        1. Attack
+        2. Skill
+        3. Defend
+        ");
+        let mut input = String::new();
 
-    Player::take_dmg(&mut player, Enemy::atk(&enemy));
+        io::stdin().read_line(&mut input).unwrap();
 
-    println!("River hp : {}", player.hp);
+        let choice = input.trim();
+        match choice {
+            "1" => enemy.take_dmg(player.atk()),
+            "2" => enemy.take_dmg(player.skill()), 
+            "3" => player.take_dmg(enemy.atk()),  
+            _ => println!("Invalid input"),      
+        }
+
+    }
 }
