@@ -162,7 +162,41 @@ impl Enemy {
 
 //main function
 fn main() {
-    let mut player = Player::new("River".to_string(), Water);
+    let mut name = String::new();
+
+    println!("Enter the name for your character");
+    std::io::stdin()
+        .read_line(&mut name)
+        .unwrap();
+
+    let mut input = String::new();
+
+    println("
+    Pick a class (Enter the number)
+    1. Water
+    2. Earth
+    3. Air
+    4. Fire
+    ");
+    
+    std::io::stdin()
+        .read_line(&mut input)
+        .unwrap();
+
+    let class = &input.trim().to_string();
+
+    let class = match class {
+        "1" => Class::Water,
+        "2" => Class::Earth,
+        "3" => Class::Air,
+        "4" => Class::Fire,
+        _ => {
+            println!("Invalid input, defaulting to Earth");
+            Class::Earth
+        },
+    }
+
+    let player = Player::new(name, class);
 
     println!("A wild goblin has appeared!");
     let mut enemy = Enemy::new(EnemyType::Goblin);
